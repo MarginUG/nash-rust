@@ -56,10 +56,10 @@ impl InnerClient {
         }
         let response = request.send().await;
         response
-            .map_err(|_| ProtocolError("Failed request"))?
+            .map_err(|e| ProtocolError::coerce_static_from_str(&format!("Failed HTTP request: {}", e)))?
             .json()
             .await
-            .map_err(|_| ProtocolError("Could not parse response as JSON"))
+            .map_err(|e| ProtocolError::coerce_static_from_str(&format!("Could not parse response as JSON: {}", e)))
     }
 
     /// Execute a NashProtocol request. Query will be created, executed over network, response will
