@@ -56,7 +56,13 @@ impl InnerClient {
         }
         let response = request.send().await;
         response
-            .map_err(|e| ProtocolError::coerce_static_from_str(&format!("Failed HTTP request: {}", e)))?
+            .map_err(|e| {
+                if e.is_timeout() {
+                    ProtocolError("Request timeout")
+                } else {
+                    ProtocolError::coerce_static_from_str(&format!("Failed HTTP request: {}", e))
+                }
+            })?
             .json()
             .await
             .map_err(|e| ProtocolError::coerce_static_from_str(&format!("Could not parse response as JSON: {}", e)))
