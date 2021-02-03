@@ -124,7 +124,6 @@ impl NashProtocol for DhFillPoolRequest {
     ) -> Result<()> {
         let server_publics = ServerPublics::from_hexstrings(self.blockchain(), response)?;
         response::fill_pool(self, server_publics, state.clone()).await?;
-        tokio::time::sleep(Duration::from_secs(5)).await;
         // Update state to indicate we now have N new r values
         state
             .read()
