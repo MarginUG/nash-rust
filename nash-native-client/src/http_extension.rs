@@ -6,7 +6,7 @@ use std::time::Duration;
 use async_recursion::async_recursion;
 use rand::Rng;
 use reqwest::header::AUTHORIZATION;
-use tracing::{error, trace_span, Instrument};
+use tracing::{error, info_span, Instrument};
 
 use nash_protocol::errors::{ProtocolError, Result};
 use nash_protocol::protocol::{NashProtocol, NashProtocolPipeline, ResponseOrError, State};
@@ -118,7 +118,7 @@ impl InnerClient {
             }
             response
         }
-        .instrument(trace_span!(
+        .instrument(info_span!(
                 "RUN (http)",
                 request = type_name::<T>(),
                 id = %rand::thread_rng().gen::<u32>()))
@@ -137,7 +137,7 @@ impl InnerClient {
             }
             response
         }
-        .instrument(trace_span!(
+        .instrument(info_span!(
                 "RUN (http)",
                 request = type_name::<T>(),
                 id = %rand::thread_rng().gen::<u32>()))

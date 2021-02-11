@@ -13,7 +13,7 @@ use tokio::{net::TcpStream, sync::mpsc, sync::oneshot, sync::RwLock, time::Durat
 use tokio_native_tls::TlsStream;
 use tokio_tungstenite::tungstenite::protocol::Message;
 use tokio_tungstenite::{connect_async, stream::Stream, WebSocketStream};
-use tracing::{error, trace, trace_span, warn, Instrument};
+use tracing::{error, trace, info_span, warn, Instrument};
 
 use nash_protocol::errors::{ProtocolError, Result};
 use nash_protocol::protocol::subscriptions::SubscriptionResponse;
@@ -27,6 +27,8 @@ use crate::http_extension::HttpClientState;
 use crate::Environment;
 
 use super::absinthe::{AbsintheEvent, AbsintheTopic, AbsintheWSRequest, AbsintheWSResponse};
+use nash_protocol::protocol::dh_fill_pool::DhFillPoolRequest;
+use nash_protocol::protocol::sign_all_states::SignAllStates;
 
 type WebSocket = WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>;
 
@@ -515,7 +517,7 @@ impl InnerClient {
             }
             response
         }
-        .instrument(trace_span!(
+        .instrument(info_span!(
                 "RUN (ws)",
                 request = type_name::<T>(),
                 id = %rand::thread_rng().gen::<u32>()))
@@ -758,12 +760,11 @@ impl Client {
                 let tick_start = tokio::time::Instant::now();
                 let remaining_orders = inner.state.read().await.get_remaining_orders();
                 if remaining_orders < 10 {
-                    trace!(%remaining_orders, "sign_all_states triggered");
                     let request = inner
                         .run(nash_protocol::protocol::sign_all_states::SignAllStates::new())
                         .await;
                     if let Err(e) = request {
-                        error!(error = %e, "sign_all_states errored");
+                        error!(request = type_name::<SignAllStates>(), error = %e, "sign_all_states errored");
                     }
                 }
                 tokio::time::sleep_until(tick_start + interval).await;
@@ -791,11 +792,11 @@ impl Client {
                         for (request, permit) in fill_pool_schedules {
                             let response = inner.run_http_with_permit(request, permit).await;
                             if let Err(e) = response {
-                                error!(error = %e, "request errored");
+                                error!(request = type_name::<DhFillPoolRequest>(), error = %e, "request errored");
                             }
                         }
                     }
-                    Err(e) => error!(%e, "getting fill pool schedules errored"),
+                    Err(e) => error!(error = %e, "acquire_fill_pool_schedules errored"),
                 }
                 tokio::time::sleep_until(tick_start + interval).await;
             }
