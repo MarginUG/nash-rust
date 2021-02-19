@@ -126,6 +126,7 @@ impl NashProtocol for LimitOrdersRequest {
     async fn process_error(
         &self,
         response: &ErrorResponse,
+        _graphql_request: Option<&serde_json::Value>,
         state: Arc<RwLock<State>>,
     ) -> Result<()> {
         // TODO: Do we need to decrement for errors?
@@ -196,6 +197,7 @@ impl NashProtocol for MarketOrdersRequest {
     async fn process_error(
         &self,
         _response: &ErrorResponse,
+        _graphql_request: Option<&serde_json::Value>,
         state: Arc<RwLock<State>>,
     ) -> Result<()> {
         // TODO: Do we need to decrement for errors?

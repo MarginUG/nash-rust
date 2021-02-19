@@ -10,10 +10,9 @@ use futures::{FutureExt, SinkExt, StreamExt};
 use futures_util::future::{select, Either};
 use rand::Rng;
 use tokio::{net::TcpStream, sync::mpsc, sync::oneshot, sync::RwLock, time::Duration};
-use tokio_native_tls::TlsStream;
 use tokio_tungstenite::tungstenite::protocol::Message;
-use tokio_tungstenite::{connect_async, stream::Stream, WebSocketStream};
-use tracing::{error, trace, info_span, warn, Instrument};
+use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
+use tracing::{error, info_span, trace, warn, Instrument};
 
 use nash_protocol::errors::{ProtocolError, Result};
 use nash_protocol::protocol::subscriptions::SubscriptionResponse;
@@ -30,7 +29,7 @@ use super::absinthe::{AbsintheEvent, AbsintheTopic, AbsintheWSRequest, AbsintheW
 use nash_protocol::protocol::dh_fill_pool::DhFillPoolRequest;
 use nash_protocol::protocol::sign_all_states::SignAllStates;
 
-type WebSocket = WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>;
+type WebSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 const HEARTBEAT_MESSAGE_ID: u64 = 0;
 // this will add heartbeat (keep alive) messages to the channel for ws to send out every 15s
@@ -295,7 +294,11 @@ impl MessageBroker {
                                     }
                                 } else {
                                     if id != HEARTBEAT_MESSAGE_ID {
-                                        warn!(id, ?response, "BROKER response without return channel");
+                                        warn!(
+                                            id,
+                                            ?response,
+                                            "BROKER response without return channel"
+                                        );
                                     }
                                 }
                             } else {
@@ -476,10 +479,11 @@ impl InnerClient {
         request: T,
     ) -> Result<ResponseOrError<T::Response>> {
         let graphql_request = request.graphql(self.state.clone()).await?;
-        let ws_response = tokio::time::timeout(self.ws_state.timeout, self.request(graphql_request).await?)
-            .await
-            .map_err(|_| ProtocolError("Request timeout"))?
-            .map_err(|_| ProtocolError("Failed to receive response from return channel"))??;
+        let ws_response =
+            tokio::time::timeout(self.ws_state.timeout, self.request(graphql_request).await?)
+                .await
+                .map_err(|_| ProtocolError("Request timeout"))?
+                .map_err(|_| ProtocolError("Failed to receive response from return channel"))??;
         let graphql_response = ws_response.json_payload()?;
         let protocol_response = request
             .response_from_json(graphql_response, self.state.clone())
