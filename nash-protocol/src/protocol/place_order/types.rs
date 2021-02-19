@@ -226,13 +226,15 @@ impl NashProtocol for LimitOrderRequest {
     async fn process_error(
         &self,
         response: &ErrorResponse,
+        graphql_request: Option<&serde_json::Value>,
         state: Arc<RwLock<State>>,
     ) -> Result<()> {
         // TODO: Do we need to decrement for errors?
         state.read().await.decr_remaining_orders();
         for err in &response.errors {
             if err.message.find("invalid blockchain signature").is_some() {
-                error!(err = %err.message, request = ?self, "invalid blockchain signature");
+                let graphql = graphql_request.unwrap().to_string();
+                error!(err = %err.message, request = ?self, %graphql, "@Ethan");
             }
         }
         Ok(())
@@ -295,6 +297,7 @@ impl NashProtocol for MarketOrderRequest {
     async fn process_error(
         &self,
         _response: &ErrorResponse,
+        _graphql_request: Option<&serde_json::Value>,
         state: Arc<RwLock<State>>,
     ) -> Result<()> {
         // TODO: Do we need to decrement for errors?

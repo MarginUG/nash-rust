@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 use async_recursion::async_recursion;
-use tracing::{info, trace};
+use tracing::trace;
 
 use super::signer::Signer;
 use crate::errors::{ProtocolError, Result};
@@ -119,7 +119,6 @@ impl State {
         let threshold = r_val_fill_pool_threshold.unwrap_or(R_VAL_FILL_POOL_THRESHOLD);
         for chain in chains.unwrap_or(Blockchain::all().as_ref()) {
             let remaining = self.signer()?.get_remaining_r_vals(chain);
-            info!("{:?}: {}", chain, remaining);
             if remaining < threshold {
                 let (semaphore, pool_type) = match chain {
                     Blockchain::Bitcoin => (&self.k1_fill_pool_semaphore, RValPoolTypes::K1),
