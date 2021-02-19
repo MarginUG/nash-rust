@@ -161,16 +161,17 @@ impl NashProtocol for NashProtocolRequest {
     async fn process_error(
         &self,
         response: &ErrorResponse,
+        graphql_request: Option<&serde_json::Value>,
         state: Arc<RwLock<State>>,
     ) -> Result<()> {
         match self {
-            Self::AssetNonces(nonces) => nonces.process_error(response, state).await,
-            Self::DhFill(dh_fill, _permit) => dh_fill.process_error(response, state).await,
-            Self::LimitOrder(limit_order) => limit_order.process_error(response, state).await,
-            Self::Orderbook(orderbook) => orderbook.process_error(response, state).await,
-            Self::SignState(sign_state) => sign_state.process_error(response, state).await,
-            Self::CancelOrders(cancel_all) => cancel_all.process_error(response, state).await,
-            Self::ListMarkets(list_markets) => list_markets.process_error(response, state).await,
+            Self::AssetNonces(nonces) => nonces.process_error(response, graphql_request, state).await,
+            Self::DhFill(dh_fill, _permit) => dh_fill.process_error(response, graphql_request, state).await,
+            Self::LimitOrder(limit_order) => limit_order.process_error(response, graphql_request, state).await,
+            Self::Orderbook(orderbook) => orderbook.process_error(response, graphql_request, state).await,
+            Self::SignState(sign_state) => sign_state.process_error(response, graphql_request, state).await,
+            Self::CancelOrders(cancel_all) => cancel_all.process_error(response, graphql_request, state).await,
+            Self::ListMarkets(list_markets) => list_markets.process_error(response, graphql_request, state).await,
         }
     }
 

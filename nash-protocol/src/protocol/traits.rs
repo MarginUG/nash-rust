@@ -24,7 +24,6 @@ pub trait NashProtocol: Debug + Send + Sync {
         None
     }
     /// Convert the protocol request to GraphQL from communication with Nash server
-    // Note: state is declared as mutable
     async fn graphql(&self, state: Arc<RwLock<State>>) -> Result<serde_json::Value>;
     /// Convert JSON response to request to the protocol's associated type
     async fn response_from_json(
@@ -46,6 +45,7 @@ pub trait NashProtocol: Debug + Send + Sync {
     async fn process_error(
         &self,
         _response: &ErrorResponse,
+        _graphql_request: Option<&serde_json::Value>,
         _state: Arc<RwLock<State>>,
     ) -> Result<()> {
         Ok(())

@@ -475,14 +475,14 @@ impl InnerClient {
         &self,
         request: T,
     ) -> Result<ResponseOrError<T::Response>> {
-        let query = request.graphql(self.state.clone()).await?;
-        let ws_response = tokio::time::timeout(self.ws_state.timeout, self.request(query).await?)
+        let graphql_request = request.graphql(self.state.clone()).await?;
+        let ws_response = tokio::time::timeout(self.ws_state.timeout, self.request(graphql_request).await?)
             .await
             .map_err(|_| ProtocolError("Request timeout"))?
             .map_err(|_| ProtocolError("Failed to receive response from return channel"))??;
-        let json_payload = ws_response.json_payload()?;
+        let graphql_response = ws_response.json_payload()?;
         let protocol_response = request
-            .response_from_json(json_payload, self.state.clone())
+            .response_from_json(graphql_response, self.state.clone())
             .await?;
         match protocol_response {
             ResponseOrError::Response(ref response) => {
@@ -492,7 +492,7 @@ impl InnerClient {
             }
             ResponseOrError::Error(ref error_response) => {
                 request
-                    .process_error(error_response, self.state.clone())
+                    .process_error(error_response, None, self.state.clone())
                     .await?;
             }
         }

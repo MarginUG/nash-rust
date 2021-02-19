@@ -44,13 +44,13 @@ impl InnerClient {
     }
 
     /// Execute a serialized NashProtocol request via http
-    async fn request_http(&self, request: serde_json::Value) -> Result<serde_json::Value> {
+    async fn request_http(&self, request: &serde_json::Value) -> Result<serde_json::Value> {
         // Do simple request/response...
         let mut request = self
             .http_state
             .client
             .post(&self.http_state.api_url)
-            .json(&request);
+            .json(request);
         if let Some(auth_token) = &self.http_state.auth_token {
             request = request.header(AUTHORIZATION, auth_token)
         }
@@ -80,12 +80,12 @@ impl InnerClient {
         &self,
         request: T,
     ) -> Result<ResponseOrError<T::Response>> {
-        let query = request.graphql(self.state.clone()).await?;
-        let json_payload = self.request_http(query).await?;
+        let graphql_request = request.graphql(self.state.clone()).await?;
+        let graphql_response = self.request_http(&graphql_request).await?;
         let protocol_response = request
-            .response_from_json(json_payload, self.state.clone())
+            .response_from_json(graphql_response, self.state.clone())
             .await?;
-        match protocol_response{
+        match protocol_response {
             ResponseOrError::Response(ref response) => {
                 request
                     .process_response(&response.data, self.state.clone())
@@ -93,7 +93,7 @@ impl InnerClient {
             }
             ResponseOrError::Error(ref error_response) => {
                 request
-                    .process_error(error_response, self.state.clone())
+                    .process_error(error_response, Some(&graphql_request), self.state.clone())
                     .await?;
             }
         }
