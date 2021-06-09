@@ -231,12 +231,12 @@ impl NashProtocol for LimitOrderRequest {
     ) -> Result<()> {
         // TODO: Do we need to decrement for errors?
         state.read().await.decr_remaining_orders();
-        for err in &response.errors {
-            if err.message.find("invalid blockchain signature").is_some() {
-                let graphql = graphql_request.unwrap().to_string();
-                error!(err = %err.message, request = ?self, %graphql, "@Ethan");
-            }
-        }
+        // for err in &response.errors {
+        //     if err.message.find("invalid blockchain signature").is_some() {
+        //         let graphql = graphql_request.unwrap().to_string();
+        //         error!(err = %err.message, request = ?self, %graphql, "@Ethan");
+        //     }
+        // }
         Ok(())
     }
 
