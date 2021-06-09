@@ -838,16 +838,16 @@ mod tests {
         assert_eq!(r.fe, s.fe);
     }
 
-    #[test]
-    fn add_sub_point() {
-        let g = Secp256r1Point::generator();
-        let i: Secp256r1Scalar = ECScalar::from(&BigInt::from(3)).unwrap();
-        assert_eq!(((g + g).unwrap() + g).unwrap().ge, (g * i).unwrap().ge);
-        assert_eq!(
-            (g + g).unwrap().ge,
-            (((g + g).unwrap() - g).unwrap() + g).unwrap().ge
-        );
-    }
+    // #[test]
+    // fn add_sub_point() {
+    //     let g = Secp256r1Point::generator();
+    //     let i: Secp256r1Scalar = ECScalar::from(&BigInt::from(3)).unwrap();
+    //     assert_eq!(((g + g).unwrap() + g).unwrap().ge, (g * i).unwrap().ge);
+    //     assert_eq!(
+    //         (g + g).unwrap().ge,
+    //         (((g + g).unwrap() - g).unwrap() + g).unwrap().ge
+    //     );
+    // }
 
     #[test]
     fn add_scalar() {
