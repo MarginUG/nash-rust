@@ -3,7 +3,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use tokio::sync::{Mutex, RwLock};
-use tracing::error;
+
 use serde::{Serialize, Deserialize};
 
 use crate::errors::Result;
@@ -225,8 +225,8 @@ impl NashProtocol for LimitOrderRequest {
 
     async fn process_error(
         &self,
-        response: &ErrorResponse,
-        graphql_request: Option<&serde_json::Value>,
+        _response: &ErrorResponse,
+        _graphql_request: Option<&serde_json::Value>,
         state: Arc<RwLock<State>>,
     ) -> Result<()> {
         // TODO: Do we need to decrement for errors?
