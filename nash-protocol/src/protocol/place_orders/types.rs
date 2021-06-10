@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use tokio::sync::{Mutex, RwLock};
-use tracing::error;
+
 
 use crate::errors::Result;
 use crate::protocol::ErrorResponse;
@@ -125,7 +125,7 @@ impl NashProtocol for LimitOrdersRequest {
 
     async fn process_error(
         &self,
-        response: &ErrorResponse,
+        _response: &ErrorResponse,
         _graphql_request: Option<&serde_json::Value>,
         state: Arc<RwLock<State>>,
     ) -> Result<()> {

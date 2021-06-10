@@ -8,13 +8,13 @@ use dotenv::dotenv;
 use tokio::time::Duration;
 
 use nash_native_client::{Client, Environment};
-use nash_protocol::errors::ProtocolError;
+
 use nash_protocol::protocol::asset_nonces::AssetNoncesRequest;
 use nash_protocol::protocol::cancel_all_orders::CancelAllOrders;
 use nash_protocol::protocol::cancel_order::CancelOrderRequest;
 use nash_protocol::protocol::cancel_orders::CancelOrdersRequest;
 use nash_protocol::protocol::dh_fill_pool::DhFillPoolRequest;
-use nash_protocol::protocol::get_account_order::{GetAccountOrderRequest, GetAccountOrderResponse};
+use nash_protocol::protocol::get_account_order::{GetAccountOrderRequest};
 use nash_protocol::protocol::get_ticker::TickerRequest;
 use nash_protocol::protocol::list_account_balances::ListAccountBalancesRequest;
 use nash_protocol::protocol::list_account_orders::ListAccountOrdersRequest;
@@ -26,9 +26,9 @@ use nash_protocol::protocol::orderbook::OrderbookRequest;
 use nash_protocol::protocol::place_order::{LimitOrderRequest, MarketOrderRequest};
 use nash_protocol::protocol::place_orders::{LimitOrdersRequest, MarketOrdersRequest};
 use nash_protocol::protocol::sign_all_states::SignAllStates;
-use nash_protocol::protocol::subscriptions::new_account_trades::SubscribeAccountTrades;
+
 use nash_protocol::protocol::subscriptions::trades::SubscribeTrades;
-use nash_protocol::protocol::subscriptions::updated_account_balances::SubscribeAccountBalances;
+
 use nash_protocol::protocol::subscriptions::updated_account_orders::SubscribeAccountOrders;
 use nash_protocol::protocol::subscriptions::updated_orderbook::SubscribeOrderbook;
 use nash_protocol::types::{
