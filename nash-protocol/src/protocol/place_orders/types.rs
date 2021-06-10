@@ -130,12 +130,12 @@ impl NashProtocol for LimitOrdersRequest {
         state: Arc<RwLock<State>>,
     ) -> Result<()> {
         // TODO: Do we need to decrement for errors?
-        state.read().await.decr_remaining_orders();
-        for err in &response.errors {
-            if err.message.find("invalid blockchain signature").is_some() {
-                error!(err = %err.message, request = ?self, "invalid blockchain signature");
-            }
-        }
+        state.read().await.decr_n_remaining_orders(self.requests.len() as u64);
+        // for err in &response.errors {
+        //     if err.message.find("invalid blockchain signature").is_some() {
+        //         error!(err = %err.message, request = ?self, "invalid blockchain signature");
+        //     }
+        // }
         Ok(())
     }
 
