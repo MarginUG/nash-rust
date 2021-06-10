@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 use chrono::offset::TimeZone;
 use chrono::Utc;
@@ -8,12 +8,13 @@ use dotenv::dotenv;
 use tokio::time::Duration;
 
 use nash_native_client::{Client, Environment};
+use nash_protocol::errors::ProtocolError;
 use nash_protocol::protocol::asset_nonces::AssetNoncesRequest;
 use nash_protocol::protocol::cancel_all_orders::CancelAllOrders;
 use nash_protocol::protocol::cancel_order::CancelOrderRequest;
 use nash_protocol::protocol::cancel_orders::CancelOrdersRequest;
 use nash_protocol::protocol::dh_fill_pool::DhFillPoolRequest;
-use nash_protocol::protocol::get_account_order::GetAccountOrderRequest;
+use nash_protocol::protocol::get_account_order::{GetAccountOrderRequest, GetAccountOrderResponse};
 use nash_protocol::protocol::get_ticker::TickerRequest;
 use nash_protocol::protocol::list_account_balances::ListAccountBalancesRequest;
 use nash_protocol::protocol::list_account_orders::ListAccountOrdersRequest;
@@ -23,16 +24,16 @@ use nash_protocol::protocol::list_markets::ListMarketsRequest;
 use nash_protocol::protocol::list_trades::ListTradesRequest;
 use nash_protocol::protocol::orderbook::OrderbookRequest;
 use nash_protocol::protocol::place_order::{LimitOrderRequest, MarketOrderRequest};
+use nash_protocol::protocol::place_orders::{LimitOrdersRequest, MarketOrdersRequest};
 use nash_protocol::protocol::sign_all_states::SignAllStates;
-use nash_protocol::protocol::subscriptions::trades::SubscribeTrades;
-use nash_protocol::protocol::subscriptions::updated_orderbook::SubscribeOrderbook;
 use nash_protocol::protocol::subscriptions::new_account_trades::SubscribeAccountTrades;
+use nash_protocol::protocol::subscriptions::trades::SubscribeTrades;
 use nash_protocol::protocol::subscriptions::updated_account_balances::SubscribeAccountBalances;
 use nash_protocol::protocol::subscriptions::updated_account_orders::SubscribeAccountOrders;
+use nash_protocol::protocol::subscriptions::updated_orderbook::SubscribeOrderbook;
 use nash_protocol::types::{
     Blockchain, BuyOrSell, DateTimeRange, OrderCancellationPolicy, OrderStatus, OrderType,
 };
-use nash_protocol::protocol::place_orders::{LimitOrdersRequest, MarketOrdersRequest};
 
 async fn init_client() -> Client {
     dotenv().ok();
@@ -44,11 +45,11 @@ async fn init_client() -> Client {
         None,
         false,
         0,
-        Environment::Sandbox,
+        Environment::Production,
         Duration::from_secs_f32(5.0),
     )
-        .await
-        .unwrap()
+    .await
+    .unwrap()
 }
 
 async fn init_sandbox_client() -> Client {
@@ -60,8 +61,151 @@ async fn init_sandbox_client() -> Client {
         Environment::Sandbox,
         Duration::from_secs_f32(5.0),
     )
-        .await
-        .unwrap()
+    .await
+    .unwrap()
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn multi_limit_orders() {
+    let client = init_client().await;
+
+    let limit_orders = LimitOrdersRequest {
+        requests: vec![
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "eth_usdc".to_string(),
+                amount: "0.0078".to_string(),
+                price: "2613.5".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Sell,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "eth_usdc".to_string(),
+                amount: "0.0153".to_string(),
+                price: "2587.5".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Buy,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "btc_usdc".to_string(),
+                amount: "0.0013621".to_string(),
+                price: "37979".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Buy,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "btc_usdc".to_string(),
+                amount: "0.00021662".to_string(),
+                price: "38360.7".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Sell,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "eth_usdc".to_string(),
+                amount: "0.0086".to_string(),
+                price: "2626.51".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Sell,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "eth_usdc".to_string(),
+                amount: "0.017".to_string(),
+                price: "2574.5".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Buy,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "btc_usdc".to_string(),
+                amount: "0.00151345".to_string(),
+                price: "37788.1".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Buy,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "btc_usdc".to_string(),
+                amount: "0.00024069".to_string(),
+                price: "38551.5".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Sell,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "eth_usdc".to_string(),
+                amount: "0.0187".to_string(),
+                price: "2561.49".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Buy,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "eth_usdc".to_string(),
+                amount: "0.0095".to_string(),
+                price: "2639.51".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Sell,
+                allow_taker: false,
+            },
+            LimitOrderRequest {
+                client_order_id: None,
+                market: "btc_usdc".to_string(),
+                amount: "0.00166479".to_string(),
+                price: "37597.3".to_string(),
+                cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
+                buy_or_sell: BuyOrSell::Buy,
+                allow_taker: false,
+            },
+        ],
+    };
+
+    let response = client
+        .run_http(limit_orders)
+        .await;
+    println!("{:#?}", response);
+
+    // let response = client
+    //     .run_http(ListAccountOrdersRequest {
+    //         market: Some("neo_usdc".to_string()),
+    //         before: None,
+    //         buy_or_sell: None,
+    //         limit: None,
+    //         status: Some(vec![OrderStatus::Pending, OrderStatus::Open]),
+    //         order_type: None,
+    //         range: None,
+    //     })
+    //     .await;
+    // println!("{:#?}", response);
+
+    let _ = client
+        .run_http(CancelAllOrders {
+            market: "neo_usdc".to_string(),
+        })
+        .await;
+    let _ = client
+        .run_http(CancelAllOrders {
+            market: "eth_usdc".to_string(),
+        })
+        .await;
+    let _ = client
+        .run_http(CancelAllOrders {
+            market: "btc_usdc".to_string(),
+        })
+        .await;
 }
 
 #[tokio::test]
@@ -88,31 +232,7 @@ async fn place_order_fill_pool_loop() {
         Duration::from_millis(1000),
         Some(vec![Blockchain::Ethereum]),
     );
-    for _ in 0..100 {
-        for _ in 0..3 {
-            let response = client
-                .run_http(LimitOrderRequest {
-                    client_order_id: None,
-                    market: "eth_btc".to_string(),
-                    buy_or_sell: BuyOrSell::Sell,
-                    amount: "0.03".to_string(),
-                    price: "0.047".to_string(),
-                    cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
-                    allow_taker: false,
-                })
-                .await
-                .unwrap();
-            println!("{:?}", response);
-        }
-        let response = client
-            .run_http(CancelAllOrders {
-                market: "eth_btc".to_string(),
-            })
-            .await
-            .unwrap();
-        println!("{:?}", response);
-        assert_eq!(response.response().unwrap().accepted, true);
-    }
+    tokio::time::sleep(Duration::from_secs(60)).await;
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -624,19 +744,6 @@ fn end_to_end_sub_trades() {
 }
 
 #[tokio::test]
-async fn end_to_end_sub_account_trades() {
-    let client = init_client().await;
-    let mut response = client
-        .subscribe_protocol(SubscribeAccountTrades {
-            market_name: "btc_usdc".to_string(),
-        })
-        .await
-        .unwrap();
-    let next_item = response.recv().await.unwrap().unwrap();
-    println!("{:?}", next_item);
-}
-
-#[tokio::test]
 async fn end_to_end_sub_account_orders() {
     let client = init_client().await;
     let mut response = client
@@ -645,20 +752,7 @@ async fn end_to_end_sub_account_orders() {
             status: None,
             buy_or_sell: None,
             order_type: None,
-            range: None
-        })
-        .await
-        .unwrap();
-    let next_item = response.recv().await.unwrap().unwrap();
-    println!("{:?}", next_item);
-}
-
-#[tokio::test]
-async fn end_to_end_sub_account_balance() {
-    let client = init_client().await;
-    let mut response = client
-        .subscribe_protocol(SubscribeAccountBalances {
-            symbol: "usdc".to_string(), // this does not work with None
+            range: None,
         })
         .await
         .unwrap();
@@ -773,21 +867,27 @@ fn multi_limit_multi_cancel() {
     let async_block = async {
         let client = init_client().await;
 
-        let mut placed_orders = client.subscribe_protocol(SubscribeAccountOrders {
-            market: Some("eth_btc".into()),
-            buy_or_sell: Some(BuyOrSell::Buy),
-            range: None,
-            status: Some(vec![OrderStatus::Pending, OrderStatus::Open]),
-            order_type: None
-        }).await.expect("Couldn't subscribe to account orders");
+        let mut placed_orders = client
+            .subscribe_protocol(SubscribeAccountOrders {
+                market: Some("eth_btc".into()),
+                buy_or_sell: Some(BuyOrSell::Buy),
+                range: None,
+                status: Some(vec![OrderStatus::Pending, OrderStatus::Open]),
+                order_type: None,
+            })
+            .await
+            .expect("Couldn't subscribe to account orders");
 
-        let mut canceled_orders = client.subscribe_protocol(SubscribeAccountOrders {
-            market: Some("eth_btc".into()),
-            buy_or_sell: Some(BuyOrSell::Buy),
-            range: None,
-            status: Some(vec![OrderStatus::Canceled]),
-            order_type: None
-        }).await.expect("Couldn't subscribe to account orders");
+        let mut canceled_orders = client
+            .subscribe_protocol(SubscribeAccountOrders {
+                market: Some("eth_btc".into()),
+                buy_or_sell: Some(BuyOrSell::Buy),
+                range: None,
+                status: Some(vec![OrderStatus::Canceled]),
+                order_type: None,
+            })
+            .await
+            .expect("Couldn't subscribe to account orders");
 
         let limit_orders = LimitOrdersRequest {
             requests: vec![
@@ -818,7 +918,7 @@ fn multi_limit_multi_cancel() {
                     cancellation_policy: OrderCancellationPolicy::GoodTilCancelled,
                     allow_taker: true,
                 },
-            ]
+            ],
         };
 
         let response = client
@@ -845,10 +945,14 @@ fn multi_limit_multi_cancel() {
         assert_eq!(orders.len(), 3);
 
         let cancel_orders = CancelOrdersRequest {
-            requests: orders.iter().take(2).map(|order| CancelOrderRequest {
-                market: order.market.clone(),
-                order_id: order.id.clone()
-            }).collect()
+            requests: orders
+                .iter()
+                .take(2)
+                .map(|order| CancelOrderRequest {
+                    market: order.market.clone(),
+                    order_id: order.id.clone(),
+                })
+                .collect(),
         };
 
         let response = client
@@ -920,7 +1024,7 @@ fn multi_market_order() {
                     market: "eth_btc".to_string(),
                     amount: "0.05".to_string(),
                 },
-            ]
+            ],
         };
 
         let response = client
