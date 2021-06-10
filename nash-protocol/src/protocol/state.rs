@@ -107,6 +107,10 @@ impl State {
         self.remaining_orders.fetch_sub(1, Ordering::Relaxed);
     }
 
+    pub fn decr_n_remaining_orders(&self, n: u64) {
+        self.remaining_orders.fetch_sub(n, Ordering::Relaxed);
+    }
+
     /// Check if pools need a refill
     #[async_recursion]
     pub async fn acquire_fill_pool_schedules(
